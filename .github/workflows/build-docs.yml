@@ -49,21 +49,21 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '20'  # Updated to the latest supported version
 
       - name: Install dependencies
         run: npm install
-        working-directory: ./vue-chart
+        working-directory: ./vue-ECharts  # Corrected to point to the actual Vue project directory
 
       - name: Build Vue App
         run: npm run build
-        working-directory: ./vue-chart
+        working-directory: ./vue-ECharts  # Corrected to point to the actual Vue project directory
 
       - name: Upload Vue build artifact
         uses: actions/upload-artifact@v4
         with:
           name: vue-chart-build
-          path: ./vue-chart/dist
+          path: ./vue-ECharts/dist
 
   deploy:
     environment:
