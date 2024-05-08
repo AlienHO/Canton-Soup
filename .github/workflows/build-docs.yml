@@ -1,4 +1,4 @@
-name: Build documentation
+name: Build and Deploy Projects
 
 on:
   push:
@@ -15,66 +15,74 @@ env:
   DOCKER_VERSION: '241.15989'
 
 jobs:
-  build:
+  build-docs:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
+      - uses: actions/checkout@v4
       - name: Build docs using Writerside Docker builder
         uses: JetBrains/writerside-github-action@v4
         with:
           instance: ${{ env.INSTANCE }}
           artifact: ${{ env.ARTIFACT }}
           docker-version: ${{ env.DOCKER_VERSION }}
-
-      - name: Save artifact with build results
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: docs
-          path: |
-            artifacts/${{ env.ARTIFACT }}
-            artifacts/report.json
-          retention-days: 7
-  test:
-    needs: build
+          path: artifacts/${{ env.ARTIFACT }}
+
+  test-docs:
+    needs: build-docs
     runs-on: ubuntu-latest
     steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: docs
-          path: artifacts
-
-      - name: Test documentation
-        uses: JetBrains/writerside-checker-action@v1
+      - uses: JetBrains/writerside-checker-action@v1
         with:
           instance: ${{ env.INSTANCE }}
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    needs: [build, test]
+
+  deploy-docs:
+    needs: test-docs
     runs-on: ubuntu-latest
     steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: docs
-
-      - name: Unzip artifact
-        run: unzip -O UTF-8 -qq '${{ env.ARTIFACT }}' -d dir
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Package and upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+      - run: unzip -O UTF-8 -qq '${{ env.ARTIFACT }}' -d dir
+      - uses: actions/configure-pages@v4
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: dir
-
-      - name: Deploy to GitHub Pages
+      - uses: actions/deploy-pages@v4
         id: deployment
-        uses: actions/deploy-pages@v4
+
+  build-vue-chart:
+    runs-on: ubuntu-latest
+    needs: deploy-docs
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      - run: npm install
+        working-directory: ./vue-chart
+      - run: npm run build
+        working-directory: ./vue-chart
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vue-chart
+          path: vue-chart/dist
+
+  deploy-vue-chart:
+    needs: build-vue-chart
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: vue-chart
+      - uses: actions/configure-pages@v4
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: vue-chart/dist
+      - uses: actions/deploy-pages@v4
+        id: deployment-vue-chart
