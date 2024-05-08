@@ -15,76 +15,92 @@ env:
   DOCKER_VERSION: '241.15989'
 
 jobs:
-  build-docs:
+  build-writerside:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Build docs using Writerside Docker builder
         uses: JetBrains/writerside-github-action@v4
         with:
           instance: ${{ env.INSTANCE }}
           artifact: ${{ env.ARTIFACT }}
           docker-version: ${{ env.DOCKER_VERSION }}
-      - uses: actions/upload-artifact@v4
-        with:
-          name: docs
-          path: artifacts/${{ env.ARTIFACT }}
-      - name: Generate report.json (Example Step)
-        run: echo "Generating report.json"  # Placeholder for your actual command
-        working-directory: ./path-to-your-script
 
-  test-docs:
-    needs: build-docs
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
+      - name: Save artifact with build results
+        uses: actions/upload-artifact@v4
         with:
           name: docs
-      - name: Test documentation with report.json
-        run: cat path/to/downloaded/report.json  # Example placeholder step
-
-  deploy-docs:
-    needs: test-docs
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: docs
-      - run: unzip -O UTF-8 -qq '${{ env.ARTIFACT }}' -d dir
-      - uses: actions/configure-pages@v4
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: dir
-      - uses: actions/deploy-pages@v4
-        id: deployment
+          path: |
+            artifacts/${{ env.ARTIFACT }}
+            artifacts/report.json
+          retention-days: 7
 
   build-vue-chart:
     runs-on: ubuntu-latest
-    needs: deploy-docs
+    needs: build-writerside
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v2
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
           node-version: '14'
-      - run: npm install
-        working-directory: ./vue-chart
-      - run: npm run build
-        working-directory: ./vue-chart
-      - uses: actions/upload-artifact@v4
-        with:
-          name: vue-chart
-          path: vue-chart/dist
 
-  deploy-vue-chart:
-    needs: build-vue-chart
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./vue-chart
+
+      - name: Build Vue App
+        run: npm run build
+        working-directory: ./vue-chart
+
+      - name: Upload Vue build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vue-chart-build
+          path: ./vue-chart/dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: [build-writerside, build-vue-chart]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - name: Download Writerside artifacts
+        uses: actions/download-artifact@v4
         with:
-          name: vue-chart
-      - uses: actions/configure-pages@v4
-      - uses: actions/upload-pages-artifact@v3
+          name: docs
+
+      - name: Download Vue Chart artifacts
+        uses: actions/download-artifact@v4
         with:
-          path: vue-chart/dist
-      - uses: actions/deploy-pages@v4
-        id: deployment-vue-chart
+          name: vue-chart-build
+
+      - name: Unzip Writerside artifact
+        run: unzip -O UTF-8 -qq '${{ env.ARTIFACT }}' -d dir
+
+      - name: Setup Pages for Writerside
+        uses: actions/configure-pages@v4
+
+      - name: Setup Pages for Vue Chart
+        uses: actions/configure-pages@v4
+
+      - name: Package and upload Pages artifact for Writerside
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dir
+
+      - name: Package and upload Pages artifact for Vue Chart
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./vue-chart/dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
