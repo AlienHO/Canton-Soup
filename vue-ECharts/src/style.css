@@ -4,8 +4,8 @@
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color: rgba(0, 0, 0, 0.87); /* 改为深色文本适应浅色背景 */
+  background-color: #ffffff; /* 白色背景 */
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -28,11 +28,13 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  background-color: #ffffff; /* 确保 body 也是白色背景 */
 }
 
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
+  color: #213547; /* 深色文本更适合白色背景 */
 }
 
 button {
@@ -42,9 +44,10 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: #f9f9f9; /* 淡灰背景 */
   cursor: pointer;
   transition: border-color 0.25s;
+  color: #213547; /* 为按钮添加深色文字 */
 }
 button:hover {
   border-color: #646cff;
@@ -56,6 +59,8 @@ button:focus-visible {
 
 .card {
   padding: 2em;
+  background-color: #ffffff; /* 卡片背景也是白色 */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* 添加轻微阴影以增强层次感 */
 }
 
 #app {
@@ -63,6 +68,7 @@ button:focus-visible {
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  background-color: #ffffff; /* 确保 App 容器是白色 */
 }
 
 @media (prefers-color-scheme: light) {

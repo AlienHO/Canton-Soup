@@ -3,12 +3,12 @@ import vue from '@vitejs/plugin-vue'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import Components from 'unplugin-vue-components/vite'
 
-// https://vitejs.dev/config/
 export default defineConfig({
+  base: '/Canton-Soup/vue-chart/',  // 设置为 GitHub 项目子路径
   plugins: [
     vue(),
     Components({
-      resolvers:[ElementPlusResolver()]
+      resolvers: [ElementPlusResolver()]
     })
   ],
 })
