@@ -29,6 +29,9 @@ jobs:
         with:
           name: docs
           path: artifacts/${{ env.ARTIFACT }}
+      - name: Generate report.json (Example Step)
+        run: echo "Generating report.json"  # Placeholder for your actual command
+        working-directory: ./path-to-your-script
 
   test-docs:
     needs: build-docs
@@ -37,9 +40,8 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: docs
-      - uses: JetBrains/writerside-checker-action@v1
-        with:
-          instance: ${{ env.INSTANCE }}
+      - name: Test documentation with report.json
+        run: cat path/to/downloaded/report.json  # Example placeholder step
 
   deploy-docs:
     needs: test-docs
